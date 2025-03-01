@@ -1,8 +1,37 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+# Till Debt Do Us Part
+
+A debt tracking application that helps users manage and track their debt journey to financial freedom.
+
+## Features
+
+- User authentication with email/password and Google OAuth
+- Add and track individual debts with details like:
+  - Debt name
+  - Current balance
+  - Category
+  - Privacy setting (public/private)
+- Track balance changes over time
+- Dashboard to view all your debts
+- Individual debt detail pages
+- Update debt balances as you pay them down
+- Secure data storage with Supabase
+
 ## Getting Started
 
-First, run the development server:
+First, set up your Supabase project:
+
+1. Create a Supabase project at [https://supabase.com](https://supabase.com)
+2. Run the SQL script in `supabase-schema.sql` in the SQL Editor to set up the database schema
+3. Copy your Supabase URL and anon key to a `.env` file:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
@@ -26,6 +55,10 @@ To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+To learn more about Supabase, check out:
+
+- [Supabase Documentation](https://supabase.com/docs) - learn about Supabase features and API.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
