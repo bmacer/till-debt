@@ -31,6 +31,30 @@ export interface DebtHistory {
     recorded_at: string;
 }
 
+// Define the DebtComment type
+export interface DebtComment {
+    id: string;
+    debt_id: string;
+    debt_history_id: string | null;
+    user_id: string;
+    comment: string;
+    created_at: string;
+}
+
+// Define the DebtProfile type
+export interface DebtProfile {
+    id: string;
+    user_id: string;
+    name: string;
+    amount: number;
+    original_amount: number;
+    interest_rate: number | null;
+    minimum_payment: number | null;
+    due_date: string | null;
+    private: boolean;
+    created_at: string;
+}
+
 // Define the DebtContextType
 export interface DebtContextType {
     debts: Debt[];
@@ -42,6 +66,9 @@ export interface DebtContextType {
     updateBalance: (id: string, amount: number) => Promise<void>;
     getDebtHistory: (debtId: string) => Promise<DebtHistory[]>;
     getDebt: (id: string) => Promise<Debt | null>;
+    getDebtComments: (debtId: string) => Promise<DebtComment[]>;
+    addDebtComment: (debtId: string, comment: string, debtHistoryId?: string) => Promise<void>;
+    deleteDebtComment: (commentId: string) => Promise<void>;
 }
 
 // Create the DebtContext
@@ -258,6 +285,78 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
         await fetchDebts();
     };
 
+    // Function to get comments for a debt
+    const getDebtComments = async (debtId: string): Promise<DebtComment[]> => {
+        if (!user) {
+            setError("You must be logged in to view debt comments");
+            return [];
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from("debt_comments")
+                .select("*")
+                .eq("debt_id", debtId)
+                .order("created_at", { ascending: false });
+
+            if (error) {
+                throw error;
+            }
+
+            return data || [];
+        } catch (error: any) {
+            setError(error.message);
+            return [];
+        }
+    };
+
+    // Function to add a comment to a debt
+    const addDebtComment = async (debtId: string, comment: string, debtHistoryId?: string): Promise<void> => {
+        if (!user) {
+            setError("You must be logged in to add a comment");
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from("debt_comments")
+                .insert({
+                    debt_id: debtId,
+                    debt_history_id: debtHistoryId || null,
+                    user_id: user.id,
+                    comment
+                });
+
+            if (error) {
+                throw error;
+            }
+        } catch (error: any) {
+            setError(error.message);
+        }
+    };
+
+    // Function to delete a comment
+    const deleteDebtComment = async (commentId: string): Promise<void> => {
+        if (!user) {
+            setError("You must be logged in to delete a comment");
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from("debt_comments")
+                .delete()
+                .eq("id", commentId)
+                .eq("user_id", user.id);
+
+            if (error) {
+                throw error;
+            }
+        } catch (error: any) {
+            setError(error.message);
+        }
+    };
+
     // Create the context value
     const value = {
         debts,
@@ -269,6 +368,9 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
         updateBalance,
         getDebtHistory,
         getDebt,
+        getDebtComments,
+        addDebtComment,
+        deleteDebtComment,
     };
 
     return <DebtContext.Provider value={value}>{children}</DebtContext.Provider>;

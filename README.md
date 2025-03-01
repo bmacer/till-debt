@@ -17,6 +17,16 @@ A debt tracking application that helps users manage and track their debt journey
 - Individual debt detail pages
 - Update debt balances as you pay them down
 - Secure data storage with Supabase
+- Timeline graph for tracking debt balances over time
+- Achievement badges to celebrate milestones
+- Comments system for debt activities:
+  - Add comments to specific debt activities
+  - Add general comments to debts
+  - Track your thoughts and progress notes
+- Explore other users:
+  - Discover other users and their public debt journeys
+  - View user profiles with their public debt information
+  - See statistics like user registration date, total debt, and number of debts
 
 ## Getting Started
 
@@ -24,7 +34,10 @@ First, set up your Supabase project:
 
 1. Create a Supabase project at [https://supabase.com](https://supabase.com)
 2. Run the SQL script in `supabase-schema.sql` in the SQL Editor to set up the database schema
-3. Copy your Supabase URL and anon key to a `.env` file:
+3. Run the additional SQL functions in the SQL Editor:
+   - `get-public-user-profiles.sql` - Function to get all public user profiles
+   - `get-public-user-profile.sql` - Function to get a single user profile
+4. Copy your Supabase URL and anon key to a `.env` file:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url

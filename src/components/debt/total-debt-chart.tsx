@@ -4,12 +4,15 @@ import { useState, useEffect } from "react";
 import { useDebts, DebtHistory } from "@/contexts/debt-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { DebtActivityComments } from "@/components/debt/debt-activity-comments";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatCurrency } from "@/lib/utils";
 
 export function TotalDebtChart() {
     const { debts, getDebtHistory } = useDebts();
     const [historyData, setHistoryData] = useState<{ date: string; amount: number; timestamp: number }[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activityLog, setActivityLog] = useState<{ date: string; debtName: string; amount: number; change: string }[]>([]);
+    const [activityLog, setActivityLog] = useState<{ date: string; debtName: string; amount: number; change: string; debtId: string }[]>([]);
 
     useEffect(() => {
         const fetchAllDebtHistory = async () => {
@@ -47,7 +50,7 @@ export function TotalDebtChart() {
                 combinedHistory.sort((a, b) => a.date.getTime() - b.date.getTime());
 
                 // Create activity log
-                const activityLogData: { date: string; debtName: string; amount: number; change: string }[] = [];
+                const activityLogData: { date: string; debtName: string; amount: number; change: string; debtId: string }[] = [];
                 const debtAmounts: { [key: string]: number } = {};
 
                 combinedHistory.forEach((entry, index) => {
@@ -60,7 +63,8 @@ export function TotalDebtChart() {
                             date: entry.date.toLocaleDateString(),
                             debtName: entry.debtName,
                             amount: entry.amount,
-                            change: change === 0 ? "Added" : change > 0 ? `+$${change.toFixed(2)}` : `-$${Math.abs(change).toFixed(2)}`
+                            change: change === 0 ? "Added" : change > 0 ? `+$${change.toFixed(2)}` : `-$${Math.abs(change).toFixed(2)}`,
+                            debtId: entry.debtId
                         });
                     }
                 });
@@ -172,10 +176,10 @@ export function TotalDebtChart() {
                                 />
                                 <YAxis
                                     tick={{ fontSize: 12 }}
-                                    tickFormatter={(value) => `$${value}`}
+                                    tickFormatter={(value) => formatCurrency(value)}
                                 />
                                 <Tooltip
-                                    formatter={(value) => [`$${Number(value).toLocaleString()}`, "Total Debt"]}
+                                    formatter={(value) => [formatCurrency(value as number), "Total Debt"]}
                                     labelFormatter={(label) => `Date: ${label}`}
                                 />
                                 <Area
@@ -192,34 +196,47 @@ export function TotalDebtChart() {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Debt Activity Log</CardTitle>
-                    <CardDescription>Recent changes to your debt balances</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-1 max-h-[300px] overflow-y-auto">
-                        {activityLog.length === 0 ? (
-                            <p className="text-center text-slate-500 py-4">No activity recorded yet</p>
-                        ) : (
-                            activityLog.map((entry, index) => (
-                                <div key={index} className="flex items-center justify-between py-2 border-b">
-                                    <div>
-                                        <p className="font-medium">{entry.debtName}</p>
-                                        <p className="text-sm text-slate-500">{entry.date}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-medium">${entry.amount.toLocaleString()}</p>
-                                        <p className={`text-sm ${entry.change === "Added" ? "text-blue-500" : entry.change.startsWith("+") ? "text-red-500" : "text-green-500"}`}>
-                                            {entry.change}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
+            <Tabs defaultValue="activity">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="activity">Activity Log</TabsTrigger>
+                    <TabsTrigger value="comments">Comments</TabsTrigger>
+                </TabsList>
+                <TabsContent value="activity">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Debt Activity Log</CardTitle>
+                            <CardDescription>Recent changes to your debt balances</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                                {activityLog.length === 0 ? (
+                                    <p className="text-center text-slate-500 py-4">No activity recorded yet</p>
+                                ) : (
+                                    activityLog.map((entry, index) => (
+                                        <div key={index} className="flex items-center justify-between py-2 border-b">
+                                            <div>
+                                                <p className="font-medium">{entry.debtName}</p>
+                                                <p className="text-sm text-slate-500">{entry.date}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-medium">{formatCurrency(entry.amount)}</p>
+                                                <p className={`text-sm ${entry.change === "Added" ? "text-blue-500" : entry.change.startsWith("+") ? "text-red-500" : "text-green-500"}`}>
+                                                    {entry.change}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="comments">
+                    {debts.length > 0 && (
+                        <DebtActivityComments debtId={debts[0].id} />
+                    )}
+                </TabsContent>
+            </Tabs>
         </div>
     );
 } 

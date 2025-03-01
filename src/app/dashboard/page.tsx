@@ -6,6 +6,7 @@ import { useDebts } from '@/contexts/debt-context'
 import { Button } from '@/components/ui/button'
 import { DebtCard } from '@/components/debt/debt-card'
 import { TotalDebtChart } from '@/components/debt/total-debt-chart'
+import { AchievementBadges } from '@/components/debt/achievement-badges'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 
@@ -47,6 +48,8 @@ export default function DashboardPage() {
                         </div>
                     ) : (
                         <>
+                            <AchievementBadges />
+
                             <TotalDebtChart />
 
                             <div>
