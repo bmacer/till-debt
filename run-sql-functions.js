@@ -34,6 +34,8 @@ async function main() {
   const sqlFiles = [
     "get-public-user-profiles.sql",
     "get-public-user-profile.sql",
+    "create-debt-comments.sql",
+    "create-activity-comments.sql",
   ];
 
   for (const file of sqlFiles) {

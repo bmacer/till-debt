@@ -3,7 +3,7 @@
 DROP FUNCTION IF EXISTS get_public_user_profile(UUID);
 
 -- Then recreate it with the correct return types
-CREATE OR REPLACE FUNCTION get_public_user_profile(user_id UUID)
+CREATE OR REPLACE FUNCTION get_public_user_profile(input_user_id UUID)
 RETURNS TABLE (
   id UUID,
   email VARCHAR(255),
@@ -27,10 +27,8 @@ BEGIN
   LEFT JOIN 
     public.debts d ON au.id = d.user_id
   WHERE
-    au.id = user_id
+    au.id = input_user_id
   GROUP BY 
-    au.id, au.email, au.created_at
-  HAVING 
-    COUNT(CASE WHEN d.private = false THEN 1 ELSE NULL END) > 0;
+    au.id, au.email, au.created_at;
 END;
 $$; 

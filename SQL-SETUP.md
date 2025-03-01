@@ -11,6 +11,7 @@ This document provides instructions on how to set up the SQL functions required 
    - `get-public-user-profiles.sql`
    - `get-public-user-profile.sql`
    - `create-debt-comments.sql` (if you're using the commenting feature)
+   - `create-activity-comments.sql` (if you're using the activity timeline comments feature)
 
 ## Option 2: Automated Setup
 

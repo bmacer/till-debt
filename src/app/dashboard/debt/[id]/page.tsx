@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, EyeOff, Pencil, Save, Trash, DollarSign, Eye, PiggyBank } from "lucide-react";
-import { DebtActivityComments } from "@/components/debt/debt-activity-comments";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from "date-fns";
 import Link from "next/link";
@@ -311,10 +310,6 @@ export default function DebtDetailPage() {
                                 )}
                             </CardContent>
                         </Card>
-
-                        <div className="mt-6">
-                            <DebtActivityComments debtId={debtId} />
-                        </div>
                     </div>
 
                     <div>
@@ -347,7 +342,6 @@ export default function DebtDetailPage() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <DebtActivityComments debtId={debtId} historyId={item.id} />
                                             </div>
                                         ))}
                                     </div>
