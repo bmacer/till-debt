@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useDebts, DebtHistory } from "@/contexts/debt-context";
+import { useDebts } from "@/contexts/debt-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Award, TrendingDown, Star, Trophy, Medal } from "lucide-react";
 
 export function AchievementBadges() {
@@ -129,7 +128,7 @@ export function AchievementBadges() {
                         <div className="flex flex-col items-center p-3 border rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
                             <Award className="h-8 w-8 text-blue-500 mb-2" />
                             <span className="text-sm font-medium text-center">First Debt Created</span>
-                            <span className="text-xs text-slate-500">You've started your journey!</span>
+                            <span className="text-xs text-slate-500">You&apos;ve started your journey!</span>
                         </div>
                     )}
 
@@ -137,7 +136,7 @@ export function AchievementBadges() {
                         <div className="flex flex-col items-center p-3 border rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
                             <TrendingDown className="h-8 w-8 text-green-500 mb-2" />
                             <span className="text-sm font-medium text-center">First Debt Adjusted</span>
-                            <span className="text-xs text-slate-500">You're making progress!</span>
+                            <span className="text-xs text-slate-500">You&apos;re making progress!</span>
                         </div>
                     )}
 
@@ -153,7 +152,7 @@ export function AchievementBadges() {
                         <div className="flex flex-col items-center p-3 border rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
                             <Medal className="h-8 w-8 text-purple-500 mb-2" />
                             <span className="text-sm font-medium text-center">Consistent Payments</span>
-                            <span className="text-xs text-slate-500">You're on a streak!</span>
+                            <span className="text-xs text-slate-500">You&apos;re on a streak!</span>
                         </div>
                     )}
                 </div>

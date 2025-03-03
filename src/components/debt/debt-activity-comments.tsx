@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDebts, DebtComment } from "@/contexts/debt-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export function DebtActivityComments({ debtId, historyId }: DebtActivityComments
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    const fetchComments = async () => {
+    const fetchComments = useCallback(async () => {
         setLoading(true);
         try {
             const commentsData = await getDebtComments(debtId);
@@ -34,11 +34,11 @@ export function DebtActivityComments({ debtId, historyId }: DebtActivityComments
         } finally {
             setLoading(false);
         }
-    };
+    }, [debtId, historyId, getDebtComments]);
 
     useEffect(() => {
         fetchComments();
-    }, [debtId, historyId]);
+    }, [fetchComments]);
 
     const handleAddComment = async () => {
         if (!newComment.trim()) return;

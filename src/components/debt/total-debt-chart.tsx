@@ -1,18 +1,42 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useDebts, DebtHistory } from "@/contexts/debt-context";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { useDebts } from "@/contexts/debt-context";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import {
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+} from "recharts";
 import { DebtActivityComments } from "@/components/debt/debt-activity-comments";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
 
 export function TotalDebtChart() {
     const { debts, getDebtHistory } = useDebts();
-    const [historyData, setHistoryData] = useState<{ date: string; amount: number; timestamp: number }[]>([]);
+    const [historyData, setHistoryData] = useState<
+        { date: string; amount: number; timestamp: number }[]
+    >([]);
     const [loading, setLoading] = useState(true);
-    const [activityLog, setActivityLog] = useState<{ date: string; debtName: string; amount: number; change: string; debtId: string }[]>([]);
+    const [activityLog, setActivityLog] = useState<
+        {
+            date: string;
+            debtName: string;
+            amount: number;
+            change: string;
+            debtId: string;
+        }[]
+    >([]);
 
     useEffect(() => {
         const fetchAllDebtHistory = async () => {
@@ -21,7 +45,7 @@ export function TotalDebtChart() {
             setLoading(true);
             try {
                 // Fetch history for each debt
-                const allHistoryPromises = debts.map(debt => getDebtHistory(debt.id));
+                const allHistoryPromises = debts.map((debt) => getDebtHistory(debt.id));
                 const allHistoryResults = await Promise.all(allHistoryPromises);
 
                 // Combine all history data with debt names
@@ -36,12 +60,12 @@ export function TotalDebtChart() {
                     const debtName = debts[index].name;
                     const debtId = debts[index].id;
 
-                    history.forEach(entry => {
+                    history.forEach((entry) => {
                         combinedHistory.push({
                             date: new Date(entry.recorded_at),
                             amount: entry.amount,
                             debtId,
-                            debtName
+                            debtName,
                         });
                     });
                 });
@@ -50,7 +74,13 @@ export function TotalDebtChart() {
                 combinedHistory.sort((a, b) => a.date.getTime() - b.date.getTime());
 
                 // Create activity log
-                const activityLogData: { date: string; debtName: string; amount: number; change: string; debtId: string }[] = [];
+                const activityLogData: {
+                    date: string;
+                    debtName: string;
+                    amount: number;
+                    change: string;
+                    debtId: string;
+                }[] = [];
                 const debtAmounts: { [key: string]: number } = {};
 
                 combinedHistory.forEach((entry, index) => {
@@ -63,49 +93,57 @@ export function TotalDebtChart() {
                             date: entry.date.toLocaleDateString(),
                             debtName: entry.debtName,
                             amount: entry.amount,
-                            change: change === 0 ? "Added" : change > 0 ? `+$${change.toFixed(2)}` : `-$${Math.abs(change).toFixed(2)}`,
-                            debtId: entry.debtId
+                            change:
+                                change === 0
+                                    ? "Added"
+                                    : change > 0
+                                        ? `+$${change.toFixed(2)}`
+                                        : `-$${Math.abs(change).toFixed(2)}`,
+                            debtId: entry.debtId,
                         });
                     }
                 });
 
                 // Group by date to get total debt per day
-                const dateMap = new Map<string, number>();
-                const dateEntries: { [key: string]: { total: number, date: Date } } = {};
+                const dateEntries: { [key: string]: { total: number; date: Date } } =
+                    {};
 
-                combinedHistory.forEach(entry => {
-                    const dateStr = entry.date.toISOString().split('T')[0];
+                combinedHistory.forEach((entry) => {
+                    const dateStr = entry.date.toISOString().split("T")[0];
 
                     if (!dateEntries[dateStr]) {
                         dateEntries[dateStr] = {
                             total: 0,
-                            date: entry.date
+                            date: entry.date,
                         };
                     }
                 });
 
                 // For each date, calculate the total debt by summing the latest amount for each debt
-                Object.keys(dateEntries).forEach(dateStr => {
+                Object.keys(dateEntries).forEach((dateStr) => {
                     const currentDebtAmounts: { [key: string]: number } = {};
 
                     // Find the latest amount for each debt up to this date
-                    combinedHistory.forEach(entry => {
-                        const entryDateStr = entry.date.toISOString().split('T')[0];
+                    combinedHistory.forEach((entry) => {
+                        const entryDateStr = entry.date.toISOString().split("T")[0];
                         if (entryDateStr <= dateStr) {
                             currentDebtAmounts[entry.debtId] = entry.amount;
                         }
                     });
 
                     // Sum up all debt amounts for this date
-                    const totalDebt = Object.values(currentDebtAmounts).reduce((sum, amount) => sum + amount, 0);
+                    const totalDebt = Object.values(currentDebtAmounts).reduce(
+                        (sum, amount) => sum + amount,
+                        0
+                    );
                     dateEntries[dateStr].total = totalDebt;
                 });
 
                 // Convert to chart data format
-                const chartData = Object.entries(dateEntries).map(([dateStr, data]) => ({
+                const chartData = Object.entries(dateEntries).map(([, data]) => ({
                     date: data.date.toLocaleDateString(),
                     amount: data.total,
-                    timestamp: data.date.getTime()
+                    timestamp: data.date.getTime(),
                 }));
 
                 setHistoryData(chartData);
@@ -152,7 +190,9 @@ export function TotalDebtChart() {
             <Card>
                 <CardHeader>
                     <CardTitle>Total Debt Over Time</CardTitle>
-                    <CardDescription>Track how your total debt changes over time</CardDescription>
+                    <CardDescription>
+                        Track how your total debt changes over time
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="h-[300px] w-full">
@@ -171,7 +211,9 @@ export function TotalDebtChart() {
                                     dataKey="date"
                                     tick={{ fontSize: 12 }}
                                     tickFormatter={(value) => {
-                                        return historyData.length > 5 ? value.split('/').slice(0, 2).join('/') : value;
+                                        return historyData.length > 5
+                                            ? value.split("/").slice(0, 2).join("/")
+                                            : value;
                                     }}
                                 />
                                 <YAxis
@@ -179,7 +221,10 @@ export function TotalDebtChart() {
                                     tickFormatter={(value) => formatCurrency(value)}
                                 />
                                 <Tooltip
-                                    formatter={(value) => [formatCurrency(value as number), "Total Debt"]}
+                                    formatter={(value) => [
+                                        formatCurrency(value as number),
+                                        "Total Debt",
+                                    ]}
                                     labelFormatter={(label) => `Date: ${label}`}
                                 />
                                 <Area
@@ -205,22 +250,38 @@ export function TotalDebtChart() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Debt Activity Log</CardTitle>
-                            <CardDescription>Recent changes to your debt balances</CardDescription>
+                            <CardDescription>
+                                Recent changes to your debt balances
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-1 max-h-[300px] overflow-y-auto">
                                 {activityLog.length === 0 ? (
-                                    <p className="text-center text-slate-500 py-4">No activity recorded yet</p>
+                                    <p className="text-center text-slate-500 py-4">
+                                        No activity recorded yet
+                                    </p>
                                 ) : (
                                     activityLog.map((entry, index) => (
-                                        <div key={index} className="flex items-center justify-between py-2 border-b">
+                                        <div
+                                            key={index}
+                                            className="flex items-center justify-between py-2 border-b"
+                                        >
                                             <div>
                                                 <p className="font-medium">{entry.debtName}</p>
                                                 <p className="text-sm text-slate-500">{entry.date}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-medium">{formatCurrency(entry.amount)}</p>
-                                                <p className={`text-sm ${entry.change === "Added" ? "text-blue-500" : entry.change.startsWith("+") ? "text-red-500" : "text-green-500"}`}>
+                                                <p className="font-medium">
+                                                    {formatCurrency(entry.amount)}
+                                                </p>
+                                                <p
+                                                    className={`text-sm ${entry.change === "Added"
+                                                            ? "text-blue-500"
+                                                            : entry.change.startsWith("+")
+                                                                ? "text-red-500"
+                                                                : "text-green-500"
+                                                        }`}
+                                                >
                                                     {entry.change}
                                                 </p>
                                             </div>
@@ -232,11 +293,9 @@ export function TotalDebtChart() {
                     </Card>
                 </TabsContent>
                 <TabsContent value="comments">
-                    {debts.length > 0 && (
-                        <DebtActivityComments debtId={debts[0].id} />
-                    )}
+                    {debts.length > 0 && <DebtActivityComments debtId={debts[0].id} />}
                 </TabsContent>
             </Tabs>
         </div>
     );
-} 
+}

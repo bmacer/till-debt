@@ -3,23 +3,40 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { useDebts, DebtHistory } from "@/contexts/debt-context";
+import { useDebts, DebtHistory, Debt } from "@/contexts/debt-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, EyeOff, Pencil, Save, Trash, DollarSign, Eye, PiggyBank } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+    ArrowLeft,
+    EyeOff,
+    Pencil,
+    Save,
+    Trash,
+    DollarSign,
+    Eye,
+    PiggyBank,
+} from "lucide-react";
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+} from "recharts";
 import { format } from "date-fns";
-import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 
 export default function DebtDetailPage() {
-    const params = useParams();
+    const params: { id: string } = useParams();
     const router = useRouter();
-    const { updateBalance, updateDebt, deleteDebt, getDebt, getDebtHistory } = useDebts();
-    const [debt, setDebt] = useState<any>(null);
+    const { updateBalance, updateDebt, deleteDebt, getDebt, getDebtHistory } =
+        useDebts();
+    const [debt, setDebt] = useState<Debt | null>(null);
     const [history, setHistory] = useState<DebtHistory[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -110,7 +127,9 @@ export default function DebtDetailPage() {
     if (loading) {
         return (
             <ProtectedRoute>
-                <div className="container mx-auto max-w-4xl py-8">Loading debt details...</div>
+                <div className="container mx-auto max-w-4xl py-8">
+                    Loading debt details...
+                </div>
             </ProtectedRoute>
         );
     }
@@ -120,7 +139,10 @@ export default function DebtDetailPage() {
             <ProtectedRoute>
                 <div className="container mx-auto max-w-4xl py-8">
                     <h1 className="text-2xl font-bold mb-4">Debt Not Found</h1>
-                    <p>The debt you're looking for doesn't exist or you don't have permission to view it.</p>
+                    <p>
+                        The debt you&apos;re looking for doesn&apos;t exist or you
+                        don&apos;t have permission to view it.
+                    </p>
                     <Button onClick={handleBack} className="mt-4">
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
                     </Button>
@@ -130,16 +152,16 @@ export default function DebtDetailPage() {
     }
 
     // Prepare data for the chart
-    const chartData = history.map(item => ({
-        date: format(new Date(item.recorded_at), 'MMM d, yyyy'),
-        amount: item.amount,
-        timestamp: new Date(item.recorded_at).getTime()
-    })).sort((a, b) => a.timestamp - b.timestamp);
+    const chartData = history
+        .map((item) => ({
+            date: format(new Date(item.recorded_at), "MMM d, yyyy"),
+            amount: item.amount,
+            timestamp: new Date(item.recorded_at).getTime(),
+        }))
+        .sort((a, b) => a.timestamp - b.timestamp);
 
     // Calculate original amount from the first history entry or use current amount
-    const originalAmount = history.length > 0
-        ? history[0].amount
-        : debt.amount;
+    const originalAmount = history.length > 0 ? history[0].amount : debt.amount;
 
     return (
         <ProtectedRoute>
@@ -178,17 +200,25 @@ export default function DebtDetailPage() {
                                             />
                                         </div>
                                         <div className="flex space-x-2">
-                                            <Button onClick={handleUpdateBalance} disabled={!newBalance}>
+                                            <Button
+                                                onClick={handleUpdateBalance}
+                                                disabled={!newBalance}
+                                            >
                                                 <Save className="mr-2 h-4 w-4" /> Save
                                             </Button>
-                                            <Button variant="outline" onClick={() => setIsEditing(false)}>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setIsEditing(false)}
+                                            >
                                                 Cancel
                                             </Button>
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <p className="text-2xl font-bold">{formatCurrency(debt.amount)}</p>
+                                        <p className="text-2xl font-bold">
+                                            {formatCurrency(debt.amount)}
+                                        </p>
                                         <Button onClick={() => setIsEditing(true)}>
                                             <Pencil className="mr-2 h-4 w-4" /> Update Balance
                                         </Button>
@@ -211,12 +241,16 @@ export default function DebtDetailPage() {
                                     checked={isPrivate}
                                     onCheckedChange={handleTogglePrivacy}
                                 />
-                                <Label htmlFor="private-mode" className="flex items-center cursor-pointer">
+                                <Label
+                                    htmlFor="private-mode"
+                                    className="flex items-center cursor-pointer"
+                                >
                                     <EyeOff className="mr-2 h-4 w-4" /> Private Mode
                                 </Label>
                             </div>
                             <p className="text-sm text-slate-500 mt-2">
-                                When enabled, this debt will be hidden from public views and summaries.
+                                When enabled, this debt will be hidden from public views and
+                                summaries.
                             </p>
                         </CardContent>
                     </Card>
@@ -236,7 +270,8 @@ export default function DebtDetailPage() {
                                 {isDeleting ? "Deleting..." : "Delete This Debt"}
                             </Button>
                             <p className="text-sm text-slate-500 mt-2">
-                                This action cannot be undone. All data associated with this debt will be permanently removed.
+                                This action cannot be undone. All data associated with this debt
+                                will be permanently removed.
                             </p>
                         </CardContent>
                     </Card>
@@ -247,7 +282,9 @@ export default function DebtDetailPage() {
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <div>
-                                    <CardTitle className="text-2xl font-bold">{debt.name}</CardTitle>
+                                    <CardTitle className="text-2xl font-bold">
+                                        {debt.name}
+                                    </CardTitle>
                                     <p className="text-sm text-muted-foreground">
                                         {debt.private ? (
                                             <span className="flex items-center text-amber-600">
@@ -277,7 +314,9 @@ export default function DebtDetailPage() {
 
                                 {chartData.length > 1 && (
                                     <div className="mt-6">
-                                        <h3 className="text-lg font-medium mb-4">Balance History</h3>
+                                        <h3 className="text-lg font-medium mb-4">
+                                            Balance History
+                                        </h3>
                                         <div className="h-[300px]">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <LineChart data={chartData}>
@@ -292,7 +331,10 @@ export default function DebtDetailPage() {
                                                         width={80}
                                                     />
                                                     <Tooltip
-                                                        formatter={(value) => [formatCurrency(value as number), "Amount"]}
+                                                        formatter={(value) => [
+                                                            formatCurrency(value as number),
+                                                            "Amount",
+                                                        ]}
                                                         labelFormatter={(label) => `Date: ${label}`}
                                                     />
                                                     <Line
@@ -322,18 +364,26 @@ export default function DebtDetailPage() {
                             </CardHeader>
                             <CardContent>
                                 {history.length === 0 ? (
-                                    <p className="text-center text-sm text-slate-500 py-4">No activity recorded yet</p>
+                                    <p className="text-center text-sm text-slate-500 py-4">
+                                        No activity recorded yet
+                                    </p>
                                 ) : (
                                     <div className="space-y-4">
                                         {[...history].reverse().map((item, index) => (
-                                            <div key={item.id} className="border-b pb-4 last:border-b-0">
+                                            <div
+                                                key={item.id}
+                                                className="border-b pb-4 last:border-b-0"
+                                            >
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div>
                                                         <p className="font-medium">
                                                             {formatCurrency(item.amount)}
                                                         </p>
                                                         <p className="text-sm text-slate-500">
-                                                            {format(new Date(item.recorded_at), 'MMM d, yyyy h:mm a')}
+                                                            {format(
+                                                                new Date(item.recorded_at),
+                                                                "MMM d, yyyy h:mm a"
+                                                            )}
                                                         </p>
                                                     </div>
                                                     {index === 0 && (
@@ -353,4 +403,4 @@ export default function DebtDetailPage() {
             </div>
         </ProtectedRoute>
     );
-} 
+}

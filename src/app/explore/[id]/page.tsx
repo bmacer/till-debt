@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, DollarSign, Calendar, CreditCard, PiggyBank, Clock, Activity, MessageSquare, Send } from "lucide-react";
+import { ArrowLeft, User, DollarSign, Calendar, CreditCard, PiggyBank, Activity, MessageSquare, Send } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -198,7 +198,7 @@ export default function UserProfilePage() {
         if (userId) {
             fetchUserProfile();
         }
-    }, [userId]);
+    }, [userId, userProfile]);
 
     const handleCommentChange = (activityId: string, value: string) => {
         setNewComments(prev => ({
@@ -290,7 +290,7 @@ export default function UserProfilePage() {
                         <User className="mx-auto h-12 w-12 text-slate-300 mb-4" />
                         <h2 className="text-xl font-medium mb-2">User Not Found</h2>
                         <p className="text-slate-500">
-                            This user doesn't exist or has no public debts to display
+                            This user doesn&apos;t exist or has no public debts to display
                         </p>
                     </div>
                 </div>

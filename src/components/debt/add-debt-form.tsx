@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDebts } from "@/contexts/debt-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 
 // Define debt categories with their colors
 const DEBT_CATEGORIES = [
@@ -28,10 +34,12 @@ export function AddDebtForm() {
         private: false,
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    ) => {
         const { name, value, type } = e.target as HTMLInputElement;
 
-        if (type === 'checkbox') {
+        if (type === "checkbox") {
             const { checked } = e.target as HTMLInputElement;
             setFormData((prev) => ({ ...prev, [name]: checked }));
         } else {
@@ -69,7 +77,9 @@ export function AddDebtForm() {
         <Card className="w-full max-w-md mx-auto">
             <CardHeader>
                 <CardTitle>Add New Debt</CardTitle>
-                <CardDescription>Enter the details of your debt to start tracking it</CardDescription>
+                <CardDescription>
+                    Enter the details of your debt to start tracking it
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -143,15 +153,11 @@ export function AddDebtForm() {
 
                     {error && <p className="text-red-500 text-sm">{error}</p>}
 
-                    <Button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full"
-                    >
+                    <Button type="submit" disabled={isSubmitting} className="w-full">
                         {isSubmitting ? "Adding..." : "Add Debt"}
                     </Button>
                 </form>
             </CardContent>
         </Card>
     );
-} 
+}

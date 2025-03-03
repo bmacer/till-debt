@@ -1,5 +1,11 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useState,
+} from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "./auth-context";
 
@@ -21,6 +27,8 @@ export interface DebtInput {
     amount: number;
     private: boolean;
     description?: string;
+    category?: string;
+    color?: string;
 }
 
 // Define the DebtHistory type
@@ -67,8 +75,13 @@ export interface DebtContextType {
     getDebtHistory: (debtId: string) => Promise<DebtHistory[]>;
     getDebt: (id: string) => Promise<Debt | null>;
     getDebtComments: (debtId: string) => Promise<DebtComment[]>;
-    addDebtComment: (debtId: string, comment: string, debtHistoryId?: string) => Promise<void>;
+    addDebtComment: (
+        debtId: string,
+        comment: string,
+        debtHistoryId?: string
+    ) => Promise<void>;
     deleteDebtComment: (commentId: string) => Promise<void>;
+    refreshDebts: () => Promise<void>;
 }
 
 // Create the DebtContext
@@ -81,8 +94,8 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
     const [error, setError] = useState<string | null>(null);
     const { user } = useAuth();
 
-    // Function to fetch debts from Supabase
-    const fetchDebts = async () => {
+    // Wrap fetchDebts in useCallback to prevent it from changing on every render
+    const fetchDebts = useCallback(async (): Promise<void> => {
         if (!user) {
             setDebts([]);
             setLoading(false);
@@ -102,20 +115,25 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
             }
 
             setDebts(data || []);
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error ? error.message : "Failed to fetch debts";
+            console.error(errorMessage);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
 
     // Fetch debts when the user changes
     useEffect(() => {
         fetchDebts();
-    }, [user]);
+    }, [fetchDebts]);
 
     // Function to add a new debt
-    const addDebt = async (debt: Omit<Debt, "id" | "user_id" | "created_at" | "updated_at">) => {
+    const addDebt = async (
+        debt: Omit<Debt, "id" | "user_id" | "created_at" | "updated_at">
+    ) => {
         if (!user) {
             setError("You must be logged in to add a debt");
             return;
@@ -123,7 +141,7 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
 
         try {
             setLoading(true);
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from("debts")
                 .insert([
                     {
@@ -139,8 +157,11 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
 
             // Refresh the debts list
             await fetchDebts();
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error ? error.message : "Failed to add debt";
+            console.error(errorMessage);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -167,8 +188,11 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
 
             // Refresh the debts list
             await fetchDebts();
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error ? error.message : "Failed to update debt";
+            console.error(errorMessage);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -195,8 +219,13 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
 
             // Refresh the debts list
             await fetchDebts();
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to update debt balance";
+            console.error(errorMessage);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -223,8 +252,11 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
 
             // Refresh the debts list
             await fetchDebts();
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error ? error.message : "Failed to delete debt";
+            console.error(errorMessage);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -249,8 +281,11 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
             }
 
             return data || [];
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error ? error.message : "Failed to fetch debt history";
+            console.error(errorMessage);
+            setError(errorMessage);
             return [];
         }
     };
@@ -274,8 +309,11 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
             }
 
             return data as Debt;
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error ? error.message : "Failed to fetch debt details";
+            console.error(errorMessage);
+            setError(errorMessage);
             return null;
         }
     };
@@ -304,39 +342,49 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
             }
 
             return data || [];
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to fetch debt comments";
+            console.error(errorMessage);
+            setError(errorMessage);
             return [];
         }
     };
 
     // Function to add a comment to a debt
-    const addDebtComment = async (debtId: string, comment: string, debtHistoryId?: string): Promise<void> => {
+    const addDebtComment = async (
+        debtId: string,
+        comment: string,
+        debtHistoryId?: string
+    ) => {
         if (!user) {
             setError("You must be logged in to add a comment");
             return;
         }
 
         try {
-            const { error } = await supabase
-                .from("debt_comments")
-                .insert({
-                    debt_id: debtId,
-                    debt_history_id: debtHistoryId || null,
-                    user_id: user.id,
-                    comment
-                });
+            const { error } = await supabase.from("debt_comments").insert({
+                debt_id: debtId,
+                debt_history_id: debtHistoryId || null,
+                user_id: user.id,
+                comment,
+            });
 
             if (error) {
                 throw error;
             }
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error ? error.message : "Failed to add debt comment";
+            console.error(errorMessage);
+            setError(errorMessage);
         }
     };
 
     // Function to delete a comment
-    const deleteDebtComment = async (commentId: string): Promise<void> => {
+    const deleteDebtComment = async (commentId: string) => {
         if (!user) {
             setError("You must be logged in to delete a comment");
             return;
@@ -352,8 +400,13 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
             if (error) {
                 throw error;
             }
-        } catch (error: any) {
-            setError(error.message);
+        } catch (error: unknown) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to delete debt comment";
+            console.error(errorMessage);
+            setError(errorMessage);
         }
     };
 
@@ -371,6 +424,7 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
         getDebtComments,
         addDebtComment,
         deleteDebtComment,
+        refreshDebts,
     };
 
     return <DebtContext.Provider value={value}>{children}</DebtContext.Provider>;

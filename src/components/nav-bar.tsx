@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
-import { Menu, X, Home, LogOut, User, PiggyBank, Users } from 'lucide-react'
+import { Menu, X, Home, LogOut, PiggyBank, Users } from 'lucide-react'
 
 export function NavBar() {
     const { user, signOut } = useAuth()
