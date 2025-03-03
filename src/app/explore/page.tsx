@@ -93,10 +93,10 @@ export default function ExplorePage() {
                                         <span className="truncate">{user.email}</span>
                                     </CardTitle>
                                     <CardDescription>
-                                        <div className="flex items-center">
+                                        <span className="flex items-center">
                                             <Calendar className="mr-1 h-4 w-4 text-slate-400" />
                                             <span>User since {format(new Date(user.created_at), 'MMM d, yyyy')}</span>
-                                        </div>
+                                        </span>
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>

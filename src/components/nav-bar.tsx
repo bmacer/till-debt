@@ -73,10 +73,10 @@ export function NavBar() {
                             </>
                         ) : (
                             <>
-                                <Link href="/sign-in">
+                                <Link href="/auth?tab=login">
                                     <Button variant="ghost">Sign In</Button>
                                 </Link>
-                                <Link href="/sign-up">
+                                <Link href="/auth?tab=signup">
                                     <Button>Sign Up</Button>
                                 </Link>
                             </>
@@ -134,12 +134,12 @@ export function NavBar() {
                         </>
                     ) : (
                         <>
-                            <Link href="/sign-in" onClick={closeMenu}>
+                            <Link href="/auth?tab=login" onClick={closeMenu}>
                                 <Button variant="ghost" className="w-full justify-start">
                                     Sign In
                                 </Button>
                             </Link>
-                            <Link href="/sign-up" onClick={closeMenu}>
+                            <Link href="/auth?tab=signup" onClick={closeMenu}>
                                 <Button className="w-full justify-start">Sign Up</Button>
                             </Link>
                         </>

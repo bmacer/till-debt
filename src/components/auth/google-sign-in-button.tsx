@@ -43,7 +43,7 @@ export function GoogleSignInButton() {
                     fill="#EA4335"
                 />
             </svg>
-            {isLoading ? 'Signing in...' : 'Sign in with Google'}
+            {isLoading ? 'Processing...' : 'Continue with Google'}
         </Button>
     );
 } 

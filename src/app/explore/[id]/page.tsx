@@ -162,6 +162,13 @@ export default function UserProfilePage() {
                         compareDesc(parseISO(a.recorded_at), parseISO(b.recorded_at))
                     );
 
+                    // Initialize all activities as expanded
+                    const initialExpandedState: Record<string, boolean> = {};
+                    allActivities.forEach(activity => {
+                        initialExpandedState[activity.id] = true;
+                    });
+                    setExpandedActivities(initialExpandedState);
+
                     // Fetch comments for all activities
                     const activityIds = allActivities.map(a => a.id);
 
@@ -198,7 +205,7 @@ export default function UserProfilePage() {
         if (userId) {
             fetchUserProfile();
         }
-    }, [userId, userProfile]);
+    }, [userId]);
 
     const handleCommentChange = (activityId: string, value: string) => {
         setNewComments(prev => ({
@@ -379,10 +386,12 @@ export default function UserProfilePage() {
                                                 onClick={() => toggleActivityExpansion(activity.id)}
                                             >
                                                 <MessageSquare className="h-4 w-4 mr-1" />
-                                                {comments[activity.id]?.length || 0} Comments
+                                                {expandedActivities[activity.id] === false
+                                                    ? `Show ${comments[activity.id]?.length || 0} Comments`
+                                                    : `Hide ${comments[activity.id]?.length || 0} Comments`}
                                             </Button>
 
-                                            {expandedActivities[activity.id] && (
+                                            {(expandedActivities[activity.id] !== false) && (
                                                 <div className="mt-2 space-y-3">
                                                     {/* Existing comments */}
                                                     {comments[activity.id]?.length > 0 ? (

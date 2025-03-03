@@ -33,13 +33,13 @@ export default function HomePage() {
                                     </p>
                                 </div>
                                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                                    <Link href="/sign-up">
+                                    <Link href="/auth?tab=signup">
                                         <Button size="lg" className="bg-primary hover:bg-primary/90">
                                             Start Your Journey
                                             <ArrowRight className="ml-2 h-4 w-4" />
                                         </Button>
                                     </Link>
-                                    <Link href="/sign-in">
+                                    <Link href="/auth?tab=login">
                                         <Button variant="outline" size="lg">
                                             Sign In
                                         </Button>
@@ -286,7 +286,7 @@ export default function HomePage() {
                                 Start your journey to debt freedom today.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 mt-6">
-                                <Link href="/sign-up">
+                                <Link href="/auth?tab=signup">
                                     <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                                         Create Your Free Account
                                         <ChevronRight className="ml-2 h-4 w-4" />
@@ -320,8 +320,8 @@ export default function HomePage() {
                             <ul className="space-y-2 text-sm">
                                 <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
                                 <li><Link href="/explore" className="hover:text-white transition-colors">Explore</Link></li>
-                                <li><Link href="/sign-in" className="hover:text-white transition-colors">Sign In</Link></li>
-                                <li><Link href="/sign-up" className="hover:text-white transition-colors">Sign Up</Link></li>
+                                <li><Link href="/auth?tab=login" className="hover:text-white transition-colors">Sign In</Link></li>
+                                <li><Link href="/auth?tab=signup" className="hover:text-white transition-colors">Sign Up</Link></li>
                             </ul>
                         </div>
                         <div>

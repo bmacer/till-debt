@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { LoginForm } from "@/components/auth/login-form";
 import { SignUpForm } from "@/components/auth/signup-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AuthPage() {
-    const [activeTab, setActiveTab] = useState("login");
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get('tab');
+    const [activeTab, setActiveTab] = useState(tabParam === 'signup' ? 'signup' : 'login');
     const { user, loading } = useAuth();
     const router = useRouter();
 
@@ -17,6 +19,13 @@ export default function AuthPage() {
             router.push("/dashboard");
         }
     }, [user, loading, router]);
+
+    // Update active tab when URL parameter changes
+    useEffect(() => {
+        if (tabParam === 'signup' || tabParam === 'login') {
+            setActiveTab(tabParam);
+        }
+    }, [tabParam]);
 
     if (loading) {
         return (
