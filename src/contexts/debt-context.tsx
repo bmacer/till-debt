@@ -410,16 +410,6 @@ export function DebtProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    // Update the authentication configuration to use the correct redirect URL
-    const getRedirectUrl = () => {
-        // Check if we're in production (Vercel deployment)
-        if (process.env.NEXT_PUBLIC_VERCEL_URL || process.env.VERCEL_URL) {
-            return `https://${process.env.NEXT_PUBLIC_VERCEL_URL || process.env.VERCEL_URL}`;
-        }
-        // Fallback to localhost for development
-        return 'http://localhost:3000';
-    };
-
     // Create the context value
     const value = {
         debts,
