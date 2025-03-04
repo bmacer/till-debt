@@ -205,7 +205,7 @@ export default function UserProfilePage() {
         if (userId) {
             fetchUserProfile();
         }
-    }, [userId]);
+    }, [userId, userProfile]);
 
     const handleCommentChange = (activityId: string, value: string) => {
         setNewComments(prev => ({

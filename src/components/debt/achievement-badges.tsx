@@ -98,7 +98,7 @@ export function AchievementBadges() {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Your Achievements</CardTitle>
+                    <CardTitle>My Achievements</CardTitle>
                     <CardDescription>Loading your achievements...</CardDescription>
                 </CardHeader>
             </Card>
@@ -118,7 +118,7 @@ export function AchievementBadges() {
             <CardHeader>
                 <CardTitle className="flex items-center">
                     <Trophy className="mr-2 h-5 w-5 text-yellow-500" />
-                    Your Achievements
+                    My Achievements
                 </CardTitle>
                 <CardDescription>Track your debt management milestones</CardDescription>
             </CardHeader>

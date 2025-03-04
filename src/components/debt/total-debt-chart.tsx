@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useDebts } from "@/contexts/debt-context";
+import { useDebts, DebtComment } from "@/contexts/debt-context";
 import {
     Card,
     CardContent,
@@ -18,12 +18,23 @@ import {
     AreaChart,
     Area,
 } from "recharts";
-import { DebtActivityComments } from "@/components/debt/debt-activity-comments";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
+import { TrendingDown, MessageSquare, Send, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { formatDistanceToNow, format } from "date-fns";
+import { useAuth } from "@/contexts/auth-context";
 
 export function TotalDebtChart() {
-    const { debts, getDebtHistory } = useDebts();
+    const { user } = useAuth();
+    const {
+        debts,
+        getDebtHistory,
+        getDebtComments,
+        addDebtComment,
+        deleteDebtComment,
+    } = useDebts();
     const [historyData, setHistoryData] = useState<
         { date: string; amount: number; timestamp: number }[]
     >([]);
@@ -35,8 +46,27 @@ export function TotalDebtChart() {
             amount: number;
             change: string;
             debtId: string;
+            historyId: string;
+            timestamp: number;
         }[]
     >([]);
+    const [debtProgress, setDebtProgress] = useState<{
+        currentDebt: number;
+        maxDebt: number;
+        percentGone: number;
+    }>({
+        currentDebt: 0,
+        maxDebt: 0,
+        percentGone: 0,
+    });
+    const [comments, setComments] = useState<Record<string, DebtComment[]>>({});
+    const [newComments, setNewComments] = useState<Record<string, string>>({});
+    const [submittingComment, setSubmittingComment] = useState<string | null>(
+        null
+    );
+    const [expandedActivities, setExpandedActivities] = useState<
+        Record<string, boolean>
+    >({});
 
     useEffect(() => {
         const fetchAllDebtHistory = async () => {
@@ -54,6 +84,7 @@ export function TotalDebtChart() {
                     amount: number;
                     debtId: string;
                     debtName: string;
+                    historyId: string;
                 }[] = [];
 
                 allHistoryResults.forEach((history, index) => {
@@ -66,6 +97,7 @@ export function TotalDebtChart() {
                             amount: entry.amount,
                             debtId,
                             debtName,
+                            historyId: entry.id,
                         });
                     });
                 });
@@ -80,6 +112,8 @@ export function TotalDebtChart() {
                     amount: number;
                     change: string;
                     debtId: string;
+                    historyId: string;
+                    timestamp: number;
                 }[] = [];
                 const debtAmounts: { [key: string]: number } = {};
 
@@ -100,52 +134,100 @@ export function TotalDebtChart() {
                                         ? `+$${change.toFixed(2)}`
                                         : `-$${Math.abs(change).toFixed(2)}`,
                             debtId: entry.debtId,
+                            historyId: entry.historyId,
+                            timestamp: entry.date.getTime(),
                         });
                     }
                 });
 
-                // Group by date to get total debt per day
-                const dateEntries: { [key: string]: { total: number; date: Date } } =
-                    {};
-
+                // Find all unique dates in the combined history
+                const allDates = new Set<string>();
                 combinedHistory.forEach((entry) => {
-                    const dateStr = entry.date.toISOString().split("T")[0];
-
-                    if (!dateEntries[dateStr]) {
-                        dateEntries[dateStr] = {
-                            total: 0,
-                            date: entry.date,
-                        };
-                    }
+                    allDates.add(entry.date.toISOString().split("T")[0]);
                 });
 
-                // For each date, calculate the total debt by summing the latest amount for each debt
-                Object.keys(dateEntries).forEach((dateStr) => {
-                    const currentDebtAmounts: { [key: string]: number } = {};
+                // Sort dates chronologically
+                const sortedDates = Array.from(allDates).sort();
 
-                    // Find the latest amount for each debt up to this date
-                    combinedHistory.forEach((entry) => {
-                        const entryDateStr = entry.date.toISOString().split("T")[0];
-                        if (entryDateStr <= dateStr) {
-                            currentDebtAmounts[entry.debtId] = entry.amount;
-                        }
+                // Create chart data with proper debt totals for each date
+                const chartData: { date: string; amount: number; timestamp: number }[] =
+                    [];
+
+                // Track the latest known amount for each debt
+                const latestDebtAmounts: { [key: string]: number } = {};
+
+                sortedDates.forEach((dateStr) => {
+                    // Get all entries for this date
+                    const entriesForDate = combinedHistory.filter(
+                        (entry) => entry.date.toISOString().split("T")[0] === dateStr
+                    );
+
+                    // Update the latest amounts for debts that changed on this date
+                    entriesForDate.forEach((entry) => {
+                        latestDebtAmounts[entry.debtId] = entry.amount;
                     });
 
-                    // Sum up all debt amounts for this date
-                    const totalDebt = Object.values(currentDebtAmounts).reduce(
+                    // Calculate total debt for this date using the latest known amounts
+                    const totalDebt = Object.values(latestDebtAmounts).reduce(
                         (sum, amount) => sum + amount,
                         0
                     );
-                    dateEntries[dateStr].total = totalDebt;
+
+                    // Add to chart data
+                    const date = new Date(dateStr);
+                    chartData.push({
+                        date: date.toLocaleDateString(),
+                        amount: totalDebt,
+                        timestamp: date.getTime(),
+                    });
                 });
 
-                // Convert to chart data format
-                const chartData = Object.entries(dateEntries).map(([, data]) => ({
-                    date: data.date.toLocaleDateString(),
-                    amount: data.total,
-                    timestamp: data.date.getTime(),
-                }));
+                // Ensure chart data is sorted by timestamp
+                chartData.sort((a, b) => a.timestamp - b.timestamp);
 
+                // Calculate debt progress metrics
+                if (chartData.length > 0) {
+                    const currentDebt = chartData[chartData.length - 1].amount;
+                    const maxDebt = Math.max(...chartData.map((data) => data.amount));
+                    const percentGone =
+                        maxDebt > 0
+                            ? Math.round(((maxDebt - currentDebt) / maxDebt) * 100)
+                            : 0;
+
+                    setDebtProgress({
+                        currentDebt,
+                        maxDebt,
+                        percentGone,
+                    });
+                }
+
+                // Initialize all activities as expanded
+                const initialExpandedState: Record<string, boolean> = {};
+                activityLogData.forEach((activity) => {
+                    initialExpandedState[activity.historyId] = true;
+                });
+                setExpandedActivities(initialExpandedState);
+
+                // Fetch comments for all activities
+                const commentsData: Record<string, DebtComment[]> = {};
+                for (const activity of activityLogData) {
+                    try {
+                        const activityComments = await getDebtComments(activity.debtId);
+                        const filteredComments = activityComments.filter(
+                            (comment) => comment.debt_history_id === activity.historyId
+                        );
+                        if (filteredComments.length > 0) {
+                            commentsData[activity.historyId] = filteredComments;
+                        }
+                    } catch (error) {
+                        console.error(
+                            `Error fetching comments for activity ${activity.historyId}:`,
+                            error
+                        );
+                    }
+                }
+
+                setComments(commentsData);
                 setHistoryData(chartData);
                 setActivityLog(activityLogData.reverse()); // Most recent first
             } catch (error) {
@@ -156,13 +238,89 @@ export function TotalDebtChart() {
         };
 
         fetchAllDebtHistory();
-    }, [debts, getDebtHistory]);
+    }, [debts, getDebtHistory, getDebtComments]);
+
+    const handleCommentChange = (activityId: string, value: string) => {
+        setNewComments((prev) => ({
+            ...prev,
+            [activityId]: value,
+        }));
+    };
+
+    const toggleActivityExpansion = (activityId: string) => {
+        setExpandedActivities((prev) => ({
+            ...prev,
+            [activityId]: !prev[activityId],
+        }));
+    };
+
+    const handleAddComment = async (debtId: string, historyId: string) => {
+        if (!user) {
+            alert("You must be logged in to add comments");
+            return;
+        }
+
+        const commentText = newComments[historyId];
+        if (!commentText?.trim()) return;
+
+        setSubmittingComment(historyId);
+
+        try {
+            await addDebtComment(debtId, commentText.trim(), historyId);
+
+            // Refresh comments for this activity
+            const updatedComments = await getDebtComments(debtId);
+            const filteredComments = updatedComments.filter(
+                (comment) => comment.debt_history_id === historyId
+            );
+
+            setComments((prev) => ({
+                ...prev,
+                [historyId]: filteredComments,
+            }));
+
+            // Clear the comment input
+            setNewComments((prev) => ({
+                ...prev,
+                [historyId]: "",
+            }));
+        } catch (error) {
+            console.error("Error adding comment:", error);
+            alert("Failed to add comment. Please try again.");
+        } finally {
+            setSubmittingComment(null);
+        }
+    };
+
+    const handleDeleteComment = async (
+        commentId: string,
+        debtId: string,
+        historyId: string
+    ) => {
+        try {
+            await deleteDebtComment(commentId);
+
+            // Refresh comments for this activity
+            const updatedComments = await getDebtComments(debtId);
+            const filteredComments = updatedComments.filter(
+                (comment) => comment.debt_history_id === historyId
+            );
+
+            setComments((prev) => ({
+                ...prev,
+                [historyId]: filteredComments,
+            }));
+        } catch (error) {
+            console.error("Error deleting comment:", error);
+            alert("Failed to delete comment. Please try again.");
+        }
+    };
 
     if (loading && debts.length > 0) {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Total Debt Over Time</CardTitle>
+                    <CardTitle>Debt Over Time</CardTitle>
                     <CardDescription>Loading history data...</CardDescription>
                 </CardHeader>
             </Card>
@@ -173,7 +331,7 @@ export function TotalDebtChart() {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Total Debt Over Time</CardTitle>
+                    <CardTitle>Debt Over Time</CardTitle>
                     <CardDescription>No history data available yet</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -189,7 +347,197 @@ export function TotalDebtChart() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Total Debt Over Time</CardTitle>
+                    <CardTitle className="flex items-center">
+                        <TrendingDown className="mr-2 h-5 w-5 text-green-500" />% Debt Gone
+                    </CardTitle>
+                    <CardDescription>
+                        Track your progress in paying down debt
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">
+                                Current: {formatCurrency(debtProgress.currentDebt)}
+                            </span>
+                            <span className="text-sm font-medium">
+                                Max: {formatCurrency(debtProgress.maxDebt)}
+                            </span>
+                        </div>
+                        <Progress value={debtProgress.percentGone} className="h-3" />
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-slate-500">0%</span>
+                            <span
+                                className={`text-lg font-bold ${debtProgress.percentGone > 50
+                                    ? "text-green-600"
+                                    : "text-blue-600"
+                                    }`}
+                            >
+                                {debtProgress.percentGone}% Gone
+                            </span>
+                            <span className="text-sm text-slate-500">100%</span>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Debt Activity Log</CardTitle>
+                    <CardDescription>
+                        Recent changes to your debt balances
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {activityLog.length === 0 ? (
+                        <p className="text-center text-slate-500 py-4">
+                            No activity recorded yet
+                        </p>
+                    ) : (
+                        <div className="space-y-6">
+                            {activityLog.map((activity) => (
+                                <div
+                                    key={activity.historyId}
+                                    className="relative pl-8 pb-6 border-l-2 border-slate-200 last:border-0"
+                                >
+                                    <div className="absolute left-[-8px] top-0 w-4 h-4 rounded-full bg-primary"></div>
+                                    <div className="mb-1 text-sm text-slate-500">
+                                        {format(
+                                            new Date(activity.timestamp),
+                                            "MMMM d, yyyy h:mm a"
+                                        )}
+                                    </div>
+                                    <div className="font-medium">
+                                        {activity.change === "Added"
+                                            ? `Added new debt: ${activity.debtName}`
+                                            : `Updated balance for: ${activity.debtName}`}
+                                    </div>
+                                    <div className="text-lg font-bold mb-2">
+                                        {formatCurrency(activity.amount)}
+                                        <span
+                                            className={`ml-2 text-sm ${activity.change === "Added"
+                                                ? "text-blue-500"
+                                                : activity.change.startsWith("+")
+                                                    ? "text-red-500"
+                                                    : "text-green-500"
+                                                }`}
+                                        >
+                                            {activity.change !== "Added" && activity.change}
+                                        </span>
+                                    </div>
+
+                                    {/* Comments section */}
+                                    <div className="mt-3">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="flex items-center text-slate-500 hover:text-slate-700"
+                                            onClick={() =>
+                                                toggleActivityExpansion(activity.historyId)
+                                            }
+                                        >
+                                            <MessageSquare className="h-4 w-4 mr-1" />
+                                            {expandedActivities[activity.historyId] === false
+                                                ? `Show ${comments[activity.historyId]?.length || 0
+                                                } Comments`
+                                                : `Hide ${comments[activity.historyId]?.length || 0
+                                                } Comments`}
+                                        </Button>
+
+                                        {expandedActivities[activity.historyId] !== false && (
+                                            <div className="mt-2 space-y-3">
+                                                {/* Existing comments */}
+                                                {comments[activity.historyId]?.length > 0 ? (
+                                                    <div className="space-y-2 mb-3">
+                                                        {comments[activity.historyId].map((comment) => (
+                                                            <div
+                                                                key={comment.id}
+                                                                className="bg-slate-50 p-3 rounded-md"
+                                                            >
+                                                                <div className="flex justify-between items-start">
+                                                                    <div className="space-y-1">
+                                                                        <p className="text-sm whitespace-pre-wrap">
+                                                                            {comment.comment}
+                                                                        </p>
+                                                                        <p className="text-xs text-slate-500">
+                                                                            {formatDistanceToNow(
+                                                                                new Date(comment.created_at),
+                                                                                { addSuffix: true }
+                                                                            )}
+                                                                        </p>
+                                                                    </div>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() =>
+                                                                            handleDeleteComment(
+                                                                                comment.id,
+                                                                                activity.debtId,
+                                                                                activity.historyId
+                                                                            )
+                                                                        }
+                                                                        className="h-6 w-6 text-slate-400 hover:text-red-500"
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-sm text-slate-500 italic">
+                                                        No comments yet
+                                                    </div>
+                                                )}
+
+                                                {/* Add comment form */}
+                                                {user && (
+                                                    <div className="flex space-x-2">
+                                                        <Textarea
+                                                            placeholder="Add a comment..."
+                                                            value={newComments[activity.historyId] || ""}
+                                                            onChange={(e) =>
+                                                                handleCommentChange(
+                                                                    activity.historyId,
+                                                                    e.target.value
+                                                                )
+                                                            }
+                                                            className="resize-none text-sm min-h-[60px]"
+                                                        />
+                                                        <Button
+                                                            size="icon"
+                                                            onClick={() =>
+                                                                handleAddComment(
+                                                                    activity.debtId,
+                                                                    activity.historyId
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                !newComments[activity.historyId]?.trim() ||
+                                                                submittingComment === activity.historyId
+                                                            }
+                                                        >
+                                                            {submittingComment === activity.historyId ? (
+                                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                                            ) : (
+                                                                <Send className="h-4 w-4" />
+                                                            )}
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Debt Over Time</CardTitle>
                     <CardDescription>
                         Track how your total debt changes over time
                     </CardDescription>
@@ -240,62 +588,6 @@ export function TotalDebtChart() {
                     </div>
                 </CardContent>
             </Card>
-
-            <Tabs defaultValue="activity">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="activity">Activity Log</TabsTrigger>
-                    <TabsTrigger value="comments">Comments</TabsTrigger>
-                </TabsList>
-                <TabsContent value="activity">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Debt Activity Log</CardTitle>
-                            <CardDescription>
-                                Recent changes to your debt balances
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-1 max-h-[300px] overflow-y-auto">
-                                {activityLog.length === 0 ? (
-                                    <p className="text-center text-slate-500 py-4">
-                                        No activity recorded yet
-                                    </p>
-                                ) : (
-                                    activityLog.map((entry, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center justify-between py-2 border-b"
-                                        >
-                                            <div>
-                                                <p className="font-medium">{entry.debtName}</p>
-                                                <p className="text-sm text-slate-500">{entry.date}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="font-medium">
-                                                    {formatCurrency(entry.amount)}
-                                                </p>
-                                                <p
-                                                    className={`text-sm ${entry.change === "Added"
-                                                            ? "text-blue-500"
-                                                            : entry.change.startsWith("+")
-                                                                ? "text-red-500"
-                                                                : "text-green-500"
-                                                        }`}
-                                                >
-                                                    {entry.change}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="comments">
-                    {debts.length > 0 && <DebtActivityComments debtId={debts[0].id} />}
-                </TabsContent>
-            </Tabs>
         </div>
     );
 }
