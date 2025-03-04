@@ -14,14 +14,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    ArrowLeft,
     EyeOff,
     Pencil,
     Save,
     Trash,
     DollarSign,
     Eye,
-    PiggyBank,
 } from "lucide-react";
 import {
     LineChart,
